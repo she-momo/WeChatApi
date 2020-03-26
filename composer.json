@@ -1,0 +1,24 @@
+{
+    "name": "she-momo/wechatapi",
+    "description": "微信常用Api接口类",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "she-momo",
+            "email": "291924205@qq.com"
+        }
+    ],
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        }
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "WeChatApi\\": "src/"
+        }
+    }
+}
