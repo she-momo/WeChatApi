@@ -2,23 +2,26 @@
 
 namespace WeChatApi;
 
-use Predis\Client;
 class Request
 {
     private $config = null;
-    private $client = null;
+    private $_client = null;
     public $parameters = [];
     public $scene = '';
 
     public function __construct()
     {
         $this->config = config::getInstance();
-        $this->client = new Client([
-            'schema' => 'tcp',
-            'host' => '127.0.0.1',
-            'port' => '6379',
-//            'password' => ''
-        ]);
+        $this->_client = new \Redis();
+        if ($this->_client->isConnected() === false) {
+            try {
+                $this->_client->connect('127.0.0.1',
+                    6379);
+                $this->_client->auth('');
+            } catch (\Exception $e) {
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -57,7 +60,7 @@ class Request
     {
         $app_id = $this->getAppId();
         $app_secret = $this->getAppSecret();
-        $this->client->select(2);
+        $this->_client->select(2);
         $cache_name = $app_id . '_access_token';
         $access_token = $this->client->get($cache_name);
         if (empty($access_token)) {
@@ -65,7 +68,7 @@ class Request
             $result = Common::curlHttpRequest($url);;
             $info = json_decode($result, true);
             $access_token = $info["access_token"];
-            $this->client->setex($cache_name, 3600, $access_token);
+            $this->_client->setex($cache_name, 3600, $access_token);
         }
         return $access_token;
     }
@@ -110,15 +113,15 @@ class Request
     {
         // 如果是企业号用以下 URL 获取 ticket
         // $url = "https://qyapi.weixin.qq.com/cgi-bin/get_jsapi_ticket?access_token=" . $access_token;
-        $this->client->select(2);
+        $this->_client->select(2);
         $cache_name = $app_id . '_jsapi_ticket';
-        $jsapi_ticket = $this->client->get($cache_name);
+        $jsapi_ticket = $this->_client->get($cache_name);
         if (empty($jsapi_ticket)) {
             $url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?type=jsapi&access_token=" . $access_token;
             $res = Common::curlHttpRequest($url);
             $result = json_decode($res);
             $jsapi_ticket = $result->ticket;
-            $this->client->setex($cache_name, 3600, $jsapi_ticket);
+            $this->_client->setex($cache_name, 3600, $jsapi_ticket);
         }
         return $access_token;
     }
